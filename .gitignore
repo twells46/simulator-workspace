@@ -1,3 +1,5 @@
 database
 Simulator
 service_account_key.json
+.env
+!.env.example

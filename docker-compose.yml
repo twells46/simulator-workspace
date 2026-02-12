@@ -1,0 +1,64 @@
+name: simulator-dev
+
+services:
+  devcontainer:
+    build:
+      context: ./Simulator
+      dockerfile: ../simulator.Containerfile
+    working_dir: /workspace
+    command: sleep infinity
+    depends_on:
+      redis:
+        condition: service_started
+      database:
+        condition: service_started
+    environment:
+      API_URL: ${API_URL}
+      FIREBASE_SERVICE_ACCOUNT_KEY_FILE: ${FIREBASE_SERVICE_ACCOUNT_KEY_FILE}
+    volumes:
+      - .:/workspace:cached
+    secrets:
+      - service_account_key
+    ports:
+      - "8080:8080"
+      - "3000:3000"
+
+  database:
+    build:
+      context: ./database
+      dockerfile: ../database.Containerfile
+    environment:
+      HOST: ${HOST}
+      PORT: ${PORT}
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      FIREBASE_DATABASE_URL: ${FIREBASE_DATABASE_URL}
+      FIREBASE_SERVICE_ACCOUNT_KEY_FILE: ${FIREBASE_SERVICE_ACCOUNT_KEY_FILE}
+      GOOGLE_STORAGE_SERVICE_ACCOUNT_KEY_FILE: ${GOOGLE_STORAGE_SERVICE_ACCOUNT_KEY_FILE}
+      GOOGLE_STORAGE_BUCKET_NAME: ${GOOGLE_STORAGE_BUCKET_NAME}
+      GOOGLE_STORAGE_PROJECT_ID: ${GOOGLE_STORAGE_PROJECT_ID}
+      LEASE_KEY: ${LEASE_KEY:-}
+      ADMIN_PUBLIC_KEY: ${ADMIN_PUBLIC_KEY:-}
+    secrets:
+      - service_account_key
+    depends_on:
+      redis:
+        condition: service_started
+    ports:
+      - "4000:4000"
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+
+volumes:
+  redis-data:
+
+secrets:
+  service_account_key:
+    file: ${SERVICE_ACCOUNT_KEY_HOST_FILE:-./service_account_key.json}

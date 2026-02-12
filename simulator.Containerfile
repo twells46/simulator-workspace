@@ -17,7 +17,7 @@ RUN apt-get update \
     pkg-config \
   && rm -rf /var/lib/apt/lists/*
 
-RUN npm install -g yarn
+# RUN npm install -g yarn
 
 RUN mkdir -p /workspace && chown -R node:node /workspace
 WORKDIR /workspace

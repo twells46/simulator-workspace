@@ -1,0 +1,21 @@
+{
+  "name": "Simulator Dev",
+  "dockerComposeFile": [
+    "../docker-compose.yml"
+  ],
+  "service": "devcontainer",
+  "runServices": [
+    "redis",
+    "database",
+    "devcontainer"
+  ],
+  "workspaceFolder": "/workspace",
+  "shutdownAction": "stopCompose",
+  "overrideCommand": false,
+  "remoteUser": "node",
+  "forwardPorts": [
+    8080,
+    4000,
+    6379
+  ]
+}

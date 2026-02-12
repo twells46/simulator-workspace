@@ -1,0 +1,35 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Scan only staged additions to avoid scanning unrelated local files.
+mapfile -d '' staged_files < <(git diff --cached --name-only --diff-filter=ACMR -z)
+if (( ${#staged_files[@]} == 0 )); then
+  exit 0
+fi
+
+blocked_name_pattern='(^|/)(\.env|service_account_key\.json|id_rsa|id_ed25519|.*\.(pem|p12|key))$'
+for file in "${staged_files[@]}"; do
+  if [[ "${file}" =~ ${blocked_name_pattern} ]]; then
+    echo "pre-commit: blocked potentially sensitive file in commit: ${file}" >&2
+    echo "pre-commit: move secrets to ignored local files or secret manager paths." >&2
+    exit 1
+  fi
+done
+
+added_lines="$(git diff --cached --unified=0 --no-color | awk '/^\+[^+]/ {print substr($0,2)}')"
+if [[ -z "${added_lines}" ]]; then
+  exit 0
+fi
+
+# High-signal token/key patterns plus generic secret assignments with long values.
+secret_pattern='(-----BEGIN (RSA|EC|OPENSSH|DSA|PGP) PRIVATE KEY-----|AKIA[0-9A-Z]{16}|AIza[0-9A-Za-z_-]{35}|ghp_[0-9A-Za-z]{36}|xox[baprs]-[0-9A-Za-z-]{10,}|sk_live_[0-9A-Za-z]{20,}|(^|[[:space:]])(api[_-]?key|secret|token|password)[A-Za-z0-9_-]*[[:space:]]*[:=][[:space:]]*["'\'']?[A-Za-z0-9_./+=-]{16,})'
+
+if grep -Einq "${secret_pattern}" <<< "${added_lines}"; then
+  echo "pre-commit: possible secret detected in staged changes." >&2
+  echo "pre-commit: remove hardcoded secrets and use .env (ignored) or Docker/K8s secrets." >&2
+  echo "pre-commit: matched lines:" >&2
+  grep -Ein "${secret_pattern}" <<< "${added_lines}" >&2 || true
+  exit 1
+fi
+
+exit 0
