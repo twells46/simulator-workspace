@@ -3,11 +3,11 @@
   "dockerComposeFile": [
     "../docker-compose.yml"
   ],
-  "service": "devcontainer",
+  "service": "frontend",
   "runServices": [
     "redis",
     "database",
-    "devcontainer"
+    "frontend"
   ],
   "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",

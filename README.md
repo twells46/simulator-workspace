@@ -50,7 +50,17 @@ Then update `.env` with your real Firebase/Google values.
 
 Place your service account JSON at `./service_account_key.json` (or set `SERVICE_ACCOUNT_KEY_HOST_FILE` in `.env` to another path).
 
-## 5. Test Container build
+## 5. Apply local database shutdown patch
+
+This workspace includes a local patch for clean `database` container shutdown without requiring you to commit changes in the sibling `../database` repo:
+
+```bash
+patch -d ../database -p1 < ./patches/database-shutdown.patch
+```
+
+If `patch` reports that it was already applied, you can continue.
+
+## 6. Test Container build
 
 ```bash
 docker compose up --build
@@ -59,7 +69,7 @@ docker compose up --build
 If this runs, that means the basic Docker config is still correct.
 Close these containers and proceed.
 
-## 6. Start Simulator development (inside `devcontainer`)
+## 7. Start Simulator development (inside `frontend`)
 
 ### One-time setup
 

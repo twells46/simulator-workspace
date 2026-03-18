@@ -1,0 +1,71 @@
+diff --git a/src/Cache.ts b/src/Cache.ts
+index cb0c80f..4e0a653 100644
+--- a/src/Cache.ts
++++ b/src/Cache.ts
+@@ -5,6 +5,7 @@ interface Cache {
+   get(selector: Selector): Promise<object | null>;
+   set(selector: Selector, value: object | null): Promise<void>;
+   remove(selector: Selector): Promise<void>;
++  close(): Promise<void>;
+ }
+ 
+-export default Cache;
+\ No newline at end of file
++export default Cache;
+diff --git a/src/RedisCache.ts b/src/RedisCache.ts
+index fb112ae..4100c0a 100644
+--- a/src/RedisCache.ts
++++ b/src/RedisCache.ts
+@@ -35,6 +35,10 @@ class RedisCache implements Cache {
+   async remove(selector: Selector): Promise<void> {
+     await this.redis_.del(RedisCache.key_(selector));
+   }
++
++  async close(): Promise<void> {
++    await this.redis_.quit();
++  }
+ }
+ 
+-export default RedisCache;
+\ No newline at end of file
++export default RedisCache;
+diff --git a/src/index.ts b/src/index.ts
+index 6c72b51..e3e392b 100644
+--- a/src/index.ts
++++ b/src/index.ts
+@@ -171,4 +171,33 @@ const main = async () => {
+   });
+ };
+ 
+-main();
+\ No newline at end of file
++let isShuttingDown = false;
++
++const shutdown = async (signal: NodeJS.Signals) => {
++  if (isShuttingDown) return;
++  isShuttingDown = true;
++
++  app.log.info({ signal }, 'Shutting down database service');
++
++  try {
++    await app.close();
++    await cache.close();
++    process.exit(0);
++  } catch (error) {
++    app.log.error({ error, signal }, 'Failed to shut down database service cleanly');
++    process.exit(1);
++  }
++};
++
++process.on('SIGINT', () => {
++  void shutdown('SIGINT');
++});
++
++process.on('SIGTERM', () => {
++  void shutdown('SIGTERM');
++});
++
++main().catch((error) => {
++  app.log.error({ error }, 'Failed to start database service');
++  process.exit(1);
++});

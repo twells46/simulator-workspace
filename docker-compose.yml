@@ -1,12 +1,12 @@
 name: simulator-dev
 
 services:
-  devcontainer:
+  frontend:
     build:
       context: ../Simulator
       dockerfile: ../simulator-workspace/simulator.Containerfile
     working_dir: /workspace
-    command: sleep infinity
+    init: true
     depends_on:
       redis:
         condition: service_started
@@ -27,6 +27,7 @@ services:
     build:
       context: ../database
       dockerfile: ../simulator-workspace/database.Containerfile
+    init: true
     environment:
       HOST: ${HOST}
       PORT: ${PORT}
