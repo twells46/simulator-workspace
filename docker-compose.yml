@@ -3,8 +3,8 @@ name: simulator-dev
 services:
   devcontainer:
     build:
-      context: ./Simulator
-      dockerfile: ../simulator.Containerfile
+      context: ../Simulator
+      dockerfile: ../simulator-workspace/simulator.Containerfile
     working_dir: /workspace
     command: sleep infinity
     depends_on:
@@ -16,7 +16,7 @@ services:
       API_URL: ${API_URL}
       FIREBASE_SERVICE_ACCOUNT_KEY_FILE: ${FIREBASE_SERVICE_ACCOUNT_KEY_FILE}
     volumes:
-      - .:/workspace:cached
+      - ../Simulator:/workspace:cached
     secrets:
       - service_account_key
     ports:
@@ -25,8 +25,8 @@ services:
 
   database:
     build:
-      context: ./database
-      dockerfile: ../database.Containerfile
+      context: ../database
+      dockerfile: ../simulator-workspace/database.Containerfile
     environment:
       HOST: ${HOST}
       PORT: ${PORT}

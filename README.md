@@ -28,6 +28,7 @@ git config core.hooksPath .githooks
 ## 3. Clone required sibling repos into expected paths
 
 ```bash
+cd ..
 git clone --recurse-submodules https://github.com/kipr/simulator.git Simulator
 git clone https://github.com/kipr/database.git database
 ```
@@ -41,6 +42,7 @@ cd Simulator && git lfs pull && cd ..
 ## 4. Configure environment and secrets
 
 ```bash
+cd simulator-workspace
 cp .env.example .env
 ```
 
@@ -51,7 +53,7 @@ Place your service account JSON at `./service_account_key.json` (or set `SERVICE
 ## 5. Test Container build
 
 ```bash
-docker compose up --build -d
+docker compose up --build
 ```
 
 If this runs, that means the basic Docker config is still correct.
@@ -59,10 +61,9 @@ Close these containers and proceed.
 
 ## 6. Start Simulator development (inside `devcontainer`)
 
-
 ### One-time setup
 
-Open the repo in a Dev Container, then in `/workspace/Simulator` follow the regular [setup procedure](https://github.com/kipr/Simulator).
+Open the repo in a Dev Container, then in `/workspace` follow the regular [setup procedure](https://github.com/kipr/Simulator).
 Here for convenience, but refer to the real link for any discrepancies/issues:
 
 Build dependencies:
