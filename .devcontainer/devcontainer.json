@@ -9,6 +9,10 @@
     "database",
     "frontend"
   ],
+  "mounts": [
+    "source=${localEnv:HOME}/.config/codex,target=/home/node/.codex,type=bind,consistency=cached",
+    "source=${localEnv:HOME}/.serena,target=/home/node/.serena,type=bind,consistency=cached"
+  ],
   "workspaceFolder": "/workspace",
   "shutdownAction": "stopCompose",
   "overrideCommand": false,
