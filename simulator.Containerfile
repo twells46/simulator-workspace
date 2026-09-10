@@ -1,9 +1,9 @@
-FROM node:20-bullseye-slim
+FROM node:24-trixie-slim
 
 USER root
 
-RUN apt-get update \
-  && apt-get install -y --no-install-recommends \
+RUN apt update \
+  && apt install -y --no-install-recommends \
     build-essential \
     cmake \
     default-jre \
@@ -14,7 +14,6 @@ RUN apt-get update \
     locales \
     pkg-config \
     python3 \
-    python3-distutils \
     swig \
     wget \
     zlib1g-dev \

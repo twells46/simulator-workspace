@@ -9,6 +9,14 @@
     "database",
     "frontend"
   ],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "github.vscode-pull-request-github"
+      ]
+    }
+  },
   "mounts": [
     "source=${localEnv:HOME}/.config/codex,target=/home/node/.codex,type=bind,consistency=cached",
     "source=${localEnv:HOME}/.serena,target=/home/node/.serena,type=bind,consistency=cached"

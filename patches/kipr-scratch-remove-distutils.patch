@@ -1,0 +1,43 @@
+From 446609d3bf737ddc66c5558be7a660c3ea05bfa2 Mon Sep 17 00:00:00 2001
+From: twells46 <173561638+twells46@users.noreply.github.com>
+Date: Thu, 3 Sep 2026 18:30:52 +0000
+Subject: [PATCH] Remove deprecated distutils
+
+---
+ package.py | 10 ++++------
+ 1 file changed, 4 insertions(+), 6 deletions(-)
+
+diff --git a/package.py b/package.py
+index a85b92a..db199b4 100644
+--- a/package.py
++++ b/package.py
+@@ -1,8 +1,6 @@
+-from shutil import copyfile
++from shutil import copyfile, copytree
+ from os import path, makedirs, getcwd
+ import json
+-from distutils.dir_util import copy_tree
+-
+ 
+ scratch_blocks_path = "scratch-blocks"
+ kipr_scratch_path = "kipr-scratch"
+@@ -34,13 +32,13 @@ copyfile(
+   path.join(kipr_scratch_path, "scratch_msgs.js")
+ )
+ 
+-copy_tree(
++copytree(
+   path.join(scratch_blocks_path, "media"),
+-  path.join(kipr_scratch_path, "media")
++  path.join(kipr_scratch_path, "media"),
++  dirs_exist_ok=True,
+ )
+ 
+ # Write package.json
+-
+ package_json = {
+   "name": "kipr-scratch",
+   "version": "1.0.0",
+-- 
+2.30.2
+
