@@ -14,7 +14,15 @@
       "extensions": [
         "dbaeumer.vscode-eslint",
         "github.vscode-pull-request-github"
-      ]
+      ],
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "fish",
+        "terminal.integrated.profiles.linux": {
+          "fish": {
+            "path": "/usr/bin/fish"
+          }
+        }
+      }
     }
   },
   "mounts": [

@@ -8,6 +8,7 @@ RUN apt update \
     cmake \
     default-jre \
     doxygen \
+    fish \
     git \
     git-lfs \
     gnupg \
@@ -21,6 +22,8 @@ RUN apt update \
   && locale-gen \
   && update-locale LANG=en_US.UTF-8 \
   && rm -rf /var/lib/apt/lists/*
+
+RUN usermod --shell /usr/bin/fish node
 
 RUN npm i -g @openai/codex
 

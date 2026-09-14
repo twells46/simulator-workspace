@@ -97,7 +97,7 @@ Alternatively, start the services and open a frontend shell:
 
 ```bash
 docker compose up --build -d
-docker compose exec frontend bash
+docker compose exec frontend fish
 ```
 
 The shell starts in `/workspace`. Source changes and generated build files there are written to the host's `Simulator` checkout.
@@ -134,7 +134,7 @@ In a second frontend terminal, start Express after the initial compilation finis
 node express.js
 ```
 
-With the Compose terminal workflow, open that second shell using `docker compose exec frontend bash`.
+With the Compose terminal workflow, open that second shell using `docker compose exec frontend fish`.
 
 Open **http://localhost:3113** on the host. Express listens on port `3000` inside the container; Compose publishes it as `3113` on the host.
 
