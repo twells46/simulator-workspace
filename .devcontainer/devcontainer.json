@@ -1,19 +1,21 @@
 {
   "name": "Simulator Dev",
-  "dockerComposeFile": [
-    "../docker-compose.yml"
-  ],
+  "dockerComposeFile": ["../docker-compose.yml", "docker-compose.yml"],
   "service": "frontend",
-  "runServices": [
-    "redis",
-    "database",
-    "frontend"
-  ],
+  "shutdownAction": "stopCompose",
+  // The overlay mounts the parent directory (Simulator, database, this repo) at
+  // /workspaces/simulator. VS Code opens the Simulator checkout.
+  "workspaceFolder": "/workspaces/simulator/Simulator",
+  // No postCreateCommand: build-deps is long, needs the network, and needs the
+  // patches applied first. Run the README build steps by hand.
+  "postStartCommand": "wait-for-services",
+  // No forwardPorts: Compose publishes 3113 (Express), 8080, 4000, and 6379.
   "customizations": {
     "vscode": {
       "extensions": [
         "dbaeumer.vscode-eslint",
-        "github.vscode-pull-request-github"
+        "github.vscode-pull-request-github",
+        "rvest.vs-code-prettier-eslint"
       ],
       "settings": {
         "terminal.integrated.defaultProfile.linux": "fish",
@@ -24,18 +26,5 @@
         }
       }
     }
-  },
-  "mounts": [
-    "source=${localEnv:HOME}/.config/codex,target=/home/node/.codex,type=bind,consistency=cached",
-    "source=${localEnv:HOME}/.serena,target=/home/node/.serena,type=bind,consistency=cached"
-  ],
-  "workspaceFolder": "/workspace",
-  "shutdownAction": "stopCompose",
-  "overrideCommand": false,
-  "remoteUser": "node",
-  "forwardPorts": [
-    8080,
-    4000,
-    6379
-  ]
+  }
 }

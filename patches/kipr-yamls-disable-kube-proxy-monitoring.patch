@@ -1,0 +1,32 @@
+From 1130ea23f17142515f83ac297b98ed6799287cb6 Mon Sep 17 00:00:00 2001
+From: twells46 <173561638+twells46@users.noreply.github.com>
+Date: Thu, 1 Oct 2026 14:50:41 -0500
+Subject: [PATCH] Disable kube-proxy monitoring for GKE Dataplane V2
+
+Dataplane V2 removes kube-proxy, so the prometheus-stack kube-proxy
+target goes down and KubeProxyDown fires.
+
+Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
+---
+ observability/prometheus-stack-values.yaml | 7 ++++++-
+ 1 file changed, 6 insertions(+), 1 deletion(-)
+
+diff --git a/observability/prometheus-stack-values.yaml b/observability/prometheus-stack-values.yaml
+index 28ea042..f98a7ef 100644
+--- a/observability/prometheus-stack-values.yaml
++++ b/observability/prometheus-stack-values.yaml
+@@ -7,4 +7,9 @@ prometheus:
+           accessModes: ["ReadWriteOnce"]
+           resources:
+             requests:
+-              storage: 100Gi
+\ No newline at end of file
++              storage: 100Gi
++
++# GKE Dataplane V2 replaces kube-proxy with eBPF, so there is nothing to scrape.
++# Disables the kube-proxy Service, ServiceMonitor, alert rules, and dashboard.
++kubeProxy:
++  enabled: false
+-- 
+2.47.3
+

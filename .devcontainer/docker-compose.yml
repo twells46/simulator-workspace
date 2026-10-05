@@ -1,0 +1,41 @@
+# Overlay for ../docker-compose.yml, which is first in devcontainer.json
+# dockerComposeFile. Relative paths here resolve against that file's directory
+# (simulator-workspace), not .devcontainer.
+services:
+  frontend:
+    build:
+      context: .devcontainer
+    init: true
+    command: sleep infinity
+    depends_on:
+      redis:
+        condition: service_started
+      database:
+        condition: service_started
+    environment:
+      API_URL: ${API_URL}
+      FIREBASE_SERVICE_ACCOUNT_KEY_FILE: ${FIREBASE_SERVICE_ACCOUNT_KEY_FILE}
+    secrets:
+      - service_account_key
+    ports:
+      - "8080:8080"
+      - "3113:3000"
+    volumes:
+      # The parent directory: Simulator, database, and this repository.
+      - ..:/workspaces/simulator
+      - claude-config:/home/code/.claude
+      - codex-config:/home/code/.codex
+    security_opt:
+      # The Claude Code and Codex sandboxes use bubblewrap, which needs
+      # syscalls that Docker's default seccomp profile blocks.
+      - seccomp=unconfined
+      # Codex's sandbox also mounts its own /proc, which Docker's masked
+      # system paths prevent.
+      - systempaths=unconfined
+
+volumes:
+  # Fixed names: shared with every other devcontainer on this machine.
+  claude-config:
+    name: claude-config
+  codex-config:
+    name: codex-config

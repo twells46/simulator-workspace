@@ -1,27 +1,7 @@
 name: simulator-dev
 
 services:
-  frontend:
-    build:
-      context: ../Simulator
-      dockerfile: ../simulator-workspace/simulator.Containerfile
-    working_dir: /workspace
-    init: true
-    depends_on:
-      redis:
-        condition: service_started
-      database:
-        condition: service_started
-    environment:
-      API_URL: ${API_URL}
-      FIREBASE_SERVICE_ACCOUNT_KEY_FILE: ${FIREBASE_SERVICE_ACCOUNT_KEY_FILE}
-    volumes:
-      - ../Simulator:/workspace:cached
-    secrets:
-      - service_account_key
-    ports:
-      - "8080:8080"
-      - "3113:3000"
+  # The frontend dev container is defined in .devcontainer/docker-compose.yml.
 
   database:
     build:

@@ -4,20 +4,20 @@ This repository provides the local Docker Compose and VS Code Dev Container setu
 
 | Service | Source / image | Purpose | Host endpoint |
 | --- | --- | --- | --- |
-| `frontend` | `../Simulator`, Node 24 on Debian Trixie | Simulator build tools and manually started Express server | `http://localhost:3113` → container port `3000` |
+| `frontend` | [.devcontainer/Dockerfile](.devcontainer/Dockerfile), Node 24 on Debian Trixie; defined in the [.devcontainer/docker-compose.yml](.devcontainer/docker-compose.yml) overlay | Devcontainer with the Simulator build tools and manually started Express server | `http://localhost:3113` → container port `3000` |
 | `database` | `../database`, Node 24 on Alpine | Database API, compiled into its image | `http://localhost:4000` |
 | `redis` | `redis:7-alpine` | API cache with append-only persistence | `localhost:6379` |
 
-Port `8080` is also published for development tooling, but the default frontend command only keeps the container running. `docker compose up` does **not** build or launch the Simulator application.
+Port `8080` is also published for development tooling, but the default frontend command only keeps the container running. Plain `docker compose up` starts only `database` and `redis`; `frontend` is part of the devcontainer overlay, and neither builds or launches the Simulator application.
 
 ## Prerequisites
 
 - Docker with Docker Compose (`docker compose`)
 - Git, Git LFS, and `patch`
-- VS Code (or a compatible editor) with the Dev Containers extension, if using the editor workflow
+- VS Code with the Dev Containers extension, or the `devcontainer` CLI
 - Firebase / Google Cloud configuration and a service account JSON for the services you will use
 
-The frontend image includes native build dependencies, Python 3, Java, Git LFS, and the Codex and Serena CLI tools. Run application build commands inside that container.
+The frontend image includes native build dependencies, Python 3, Java, Git LFS, Claude Code, Codex, and the TypeScript language server. Run application build commands inside that container; the host needs no Node. See [.devcontainer/README.md](.devcontainer/README.md) for the image, mounts, smoke tests, and caveats.
 
 ## 1. Clone the workspace and sibling repositories
 
@@ -34,12 +34,12 @@ git -C Simulator lfs pull
 cd simulator-workspace
 ```
 
-Keep these names and relative paths: the Compose build contexts and Containerfile paths depend on them.
+Keep these names and relative paths: the Compose build contexts and the devcontainer mounts depend on them.
 
 ```text
 parent-directory/
 ├── simulator-workspace/    # this repository
-├── Simulator/              # mounted at /workspace in frontend
+├── Simulator/              # opened in the devcontainer at its host path
 └── database/               # copied into the database image at build time
 ```
 
@@ -55,7 +55,7 @@ From `simulator-workspace`:
 cp .env.example .env
 ```
 
-Fill in the Firebase database URL, Google Storage bucket, and Google Cloud project ID in `.env`. Place the service account JSON at `./service_account_key.json`, or change `SERVICE_ACCOUNT_KEY_HOST_FILE` to its host path. Both containers mount that file at `/run/secrets/service_account_key`.
+Fill in the Firebase database URL, Google Storage bucket, and Google Cloud project ID in `.env`. Place the service account JSON at `./service_account_key.json`, or change `SERVICE_ACCOUNT_KEY_HOST_FILE` to its host path. The `frontend` and `database` containers mount that file at `/run/secrets/service_account_key`.
 
 The default local service settings are:
 
@@ -81,38 +81,34 @@ These modify the sibling checkouts; neither the container builds nor the Dev Con
 
 ## 4. Start the development environment
 
-### VS Code Dev Container
+The devcontainer runs as the user `code` and mounts the parent directory at `/workspaces/simulator`; that is its only bind mount. Claude Code and Codex logins are kept in the shared `claude-config` and `codex-config` volumes. Compose fails with a missing-secret error if the service account key from step 2 is absent.
 
-The Dev Container configuration bind-mounts two host directories. Create them before opening the container if they do not already exist:
+### VS Code
 
-```bash
-mkdir -p "$HOME/.config/codex" "$HOME/.serena"
-```
+Open `simulator-workspace` in VS Code and choose **Dev Containers: Reopen in Container**. This starts all three services and opens the Simulator checkout at `/workspaces/simulator/Simulator`. Closing the window stops the Compose services.
 
-Open `simulator-workspace` in VS Code and choose **Dev Containers: Reopen in Container**. This starts all three services and opens the Simulator checkout at `/workspace` as the `node` user. Closing the Dev Container stops the Compose services.
+### Terminal
 
-### Docker Compose terminals
-
-Alternatively, start the services and open a frontend shell:
+Start the devcontainer with the `devcontainer` CLI, then open shells in it:
 
 ```bash
-docker compose up --build -d
-docker compose exec frontend fish
+devcontainer up --workspace-folder .
+devcontainer exec --workspace-folder . fish
 ```
 
-The shell starts in `/workspace`. Source changes and generated build files there are written to the host's `Simulator` checkout.
+Source changes and generated build files are written directly to the host checkouts.
 
 ## 5. Build the Simulator
 
-Inside `frontend`, in `/workspace`, run the initial setup in this order:
+Inside `frontend`, in the Simulator checkout, run the initial setup in this order:
 
 ```bash
 yarn run build-deps
-yarn install
+yarn install --cache-folder ./.yarncache
 yarn run build-i18n
 ```
 
-`build-deps` builds the native/WebAssembly dependencies and generates the local `kipr-scratch` package needed by `yarn install`. It downloads toolchains and dependencies and can take considerable time. The current build still uses Yarn; the modernization documents under `plans/` describe proposed changes.
+`build-deps` builds the native/WebAssembly dependencies and generates the local `kipr-scratch` package needed by `yarn install`. It downloads toolchains and dependencies and can take considerable time. `--cache-folder` avoids a Yarn race with the `ivygate` Git dependency, as in CI. Build outputs contain absolute paths; if they were built under another path (for example on the host path or the old `/workspace` mount), delete and rebuild them as listed in [AGENTS.md](AGENTS.md#clean-rebuild). The current build still uses Yarn; the modernization documents under `plans/` describe proposed changes.
 
 ## 6. Run the Simulator
 
@@ -134,13 +130,13 @@ In a second frontend terminal, start Express after the initial compilation finis
 node express.js
 ```
 
-With the Compose terminal workflow, open that second shell using `docker compose exec frontend fish`.
+In the terminal workflow, open that second shell with `devcontainer exec --workspace-folder . fish`.
 
 Open **http://localhost:3113** on the host. Express listens on port `3000` inside the container; Compose publishes it as `3113` on the host.
 
 ## Everyday commands
 
-Run these from `simulator-workspace` on the host:
+Run these from `simulator-workspace` on the host (the container has no Docker CLI):
 
 ```bash
 # Inspect service status and API/cache logs.
@@ -156,7 +152,7 @@ docker compose down
 
 Redis data is stored in the named `redis-data` volume. `docker compose down -v` also deletes that data.
 
-Run application checks inside `frontend`, from `/workspace`:
+Run application checks inside `frontend`, from the Simulator checkout:
 
 ```bash
 yarn lint
@@ -165,11 +161,12 @@ yarn test
 
 ## Repository contents
 
-- [docker-compose.yml](docker-compose.yml): services, ports, environment wiring, credentials mount, and Redis volume.
-- [simulator.Containerfile](simulator.Containerfile) and [database.Containerfile](database.Containerfile): development toolchain and API image builds.
-- [.devcontainer/devcontainer.json](.devcontainer/devcontainer.json): editor setup, host configuration mounts, and forwarded ports.
+- [docker-compose.yml](docker-compose.yml): the `database` and `redis` services, ports, environment wiring, credentials mount, and Redis volume.
+- [database.Containerfile](database.Containerfile): API image build.
+- [.devcontainer/](.devcontainer/): development toolchain image, Compose overlay with the `frontend` service, and editor setup; see its [README](.devcontainer/README.md).
+- [AGENTS.md](AGENTS.md) and [CLAUDE.md](CLAUDE.md): notes for coding agents (environment detection, build order, clean rebuilds).
 - [patches/](patches/): local compatibility and shutdown fixes for sibling repositories.
-- [plans/BUILD_MODERNIZATION.md](plans/BUILD_MODERNIZATION.md), [plans/GENERAL.md](plans/GENERAL.md), and [plans/INSTANCING_IMPROVEMENTS.md](plans/INSTANCING_IMPROVEMENTS.md): design proposals, not setup steps or guarantees of implemented behavior.
+- [plans/BUILD_MODERNIZATION.md](plans/BUILD_MODERNIZATION.md), [plans/GENERAL.md](plans/GENERAL.md), and [plans/INSTANCING_IMPROVEMENTS.md](plans/INSTANCING_IMPROVEMENTS.md), and [plans/DEVCONTAINER.md](plans/DEVCONTAINER.md): design proposals, not setup steps or guarantees of implemented behavior.
 - [redis_replica_disruption_budget.yaml](redis_replica_disruption_budget.yaml): Kubernetes Redis replica disruption budget; not used by local Compose.
 - [LICENSE](LICENSE): GNU General Public License, version 3.
 
