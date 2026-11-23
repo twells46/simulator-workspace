@@ -18,6 +18,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
 #   gh: pull requests and `gh auth git-credential` outside VS Code
 #   gnupg: signed commits through VS Code's GPG agent forwarding
 #   redis-tools: redis-cli against the Compose redis service
+#   zstd: the Claude Code installer downloads the compressed binary
+#     (about 120 MB instead of 340 MB) only when zstd is present
 RUN apt-get update \
   && apt-get install -y --no-install-recommends \
     bubblewrap \
@@ -46,6 +48,7 @@ RUN apt-get update \
     tzdata \
     wget \
     zlib1g-dev \
+    zstd \
   && ln -s "$(command -v fdfind)" /usr/local/bin/fd \
   && sed -i 's/^# *\(en_US.UTF-8 UTF-8\)/\1/' /etc/locale.gen \
   && locale-gen \
@@ -87,8 +90,15 @@ ENV CLAUDE_CONFIG_DIR=/home/code/.claude \
     CODEX_HOME=/home/code/.codex \
     DEVCONTAINER=true \
     PATH=/home/code/.local/bin:$PATH
+# The installer downloads a large binary in one request with no retry, and a
+# slow connection can drop partway through, so retry the whole install.
 RUN mkdir -p "$CLAUDE_CONFIG_DIR" "$CODEX_HOME" \
-  && curl -fsSL https://claude.ai/install.sh | bash \
+  && for attempt in 1 2 3; do \
+       curl -fsSL https://claude.ai/install.sh | bash && break; \
+       [ "$attempt" = 3 ] && exit 1; \
+       echo "Claude Code install failed (attempt $attempt), retrying" >&2; \
+       sleep 10; \
+     done \
   && claude --version
 
 CMD ["sleep", "infinity"]
