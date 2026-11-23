@@ -27,7 +27,7 @@ cd simulator-workspace
 git config core.hooksPath .githooks
 
 cd ..
-git clone --recurse-submodules https://github.com/kipr/simulator.git Simulator
+git clone --recurse-submodulesi --shallow-submodules https://github.com/kipr/Simulator.git
 git clone https://github.com/kipr/database.git database
 git -C Simulator lfs install --local
 git -C Simulator lfs pull
